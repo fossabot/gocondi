@@ -1,0 +1,13 @@
+package: github.com/avegao/gocondi
+homepage: https://github.com/avegao/gocondi
+license: MIT
+owners:
+- name: Álvaro de la Vega Olmedilla
+  email: alvarodlvo@gmail.com
+  homepage: https://avegao.com
+import:
+- package: github.com/sirupsen/logrus
+  version: ^1.0.3
+testImport:
+- package: github.com/stretchr/testify
+  version: ^1.1.4
