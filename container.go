@@ -5,18 +5,30 @@ import (
     "github.com/sirupsen/logrus"
     "errors"
     "fmt"
+    "strings"
+    "io/ioutil"
+    "os"
+    "strconv"
 )
 
 const defaultDatabaseName = "default"
 
 var containerObject = new(Container)
 
+// In the container initialization first list all files in /run/secret
+// second read all env var becoming with "GOCONDI
+// and last in the array
+// TODO Read from yml
 type containerInterface interface {
     GetDefaultDatabase() (*sql.DB, error)
     GetDatabase(name string) (*sql.DB, error)
     GetDatabases() []*sql.DB
     GetLogger() *logrus.Logger
-    GetParameter(name string) interface{}
+    GetStringParameter(name string) string
+    GetStringArrayParameter(name string) string
+    GetIntParameter(name string) int
+    GetFloatParameter(name string) float32
+    GetBoolParameter(name string) bool
     SetDefaultDatabase(database *sql.DB) *Container
     SetDatabase(name string, database *sql.DB) *Container
     SetDatabases(databases map[string]*sql.DB) *Container
@@ -66,14 +78,29 @@ func (containerObject *Container) GetLogger() *logrus.Logger {
     return containerObject.logger
 }
 
-func (containerObject *Container) GetParameter(name string) interface{} {
-    parameter := containerObject.parameters[name]
+func (containerObject *Container) GetStringParameter(name string) string {
+    return getParameter(name)
+}
 
-    if nil == parameter && nil != containerObject.logger {
-        containerObject.logger.Warningf("Parameter \"%s\" not exists", name)
-    }
+func (containerObject *Container) GetIntParameter(name string) int {
+    parameter := getParameter(name)
+    value, _ := strconv.ParseInt(parameter, 10, 0)
 
-    return parameter
+    return int(value)
+}
+
+func (containerObject *Container) GetFloatParameter(name string) float32 {
+    parameter := getParameter(name)
+    value, _ := strconv.ParseFloat(parameter, 0)
+
+    return float32(value)
+}
+
+func (containerObject *Container) GetBoolParameter(name string) bool {
+    parameter := getParameter(name)
+    value, _ := strconv.ParseBool(parameter)
+
+    return value
 }
 
 func (containerObject *Container) SetDefaultDatabase(database *sql.DB) *Container {
@@ -118,6 +145,90 @@ func (containerObject *Container) SetParameters(parameters map[string]interface{
     return containerObject
 }
 
+func (containerObject *Container) readSecretsFolder() {
+    secretFiles, err := ioutil.ReadDir("/run/secrets")
+
+    if nil != err {
+        containerObject.logger.WithError(err).Warningf("Error reading secrets folder")
+        return
+    }
+
+    for _, secretFile := range secretFiles {
+        // This is for prevent
+        if secretFile.IsDir() {
+            containerObject.logger.Warningf("Secrets folder has a folder!")
+            continue
+        }
+
+        secretName := secretFile.Name()
+
+        secretInBytes, err := ioutil.ReadFile(fmt.Sprintf("/run/secrets/%s", secretName))
+
+        if nil != err {
+            containerObject.logger.WithError(err).WithField("secret", secretName).Warningf("Error reading secret")
+            continue
+        }
+
+        secret := string(secretInBytes)
+
+        containerObject.SetParameter(secretName, secret)
+    }
+}
+
+func (containerObject *Container) readParametersFromEnv() {
+    for _, pair := range os.Environ() {
+        name := pair[0]
+
+        containerObject.logger.WithField("var", name).Debugf("Reading env var")
+    }
+}
+
 func GetContainer() *Container {
     return containerObject
+}
+
+func New() *Container {
+    containerObject.readSecretsFolder()
+    containerObject.readParametersFromEnv()
+
+    return containerObject
+}
+
+func getParameter(name string) string {
+    parameter := containerObject.parameters[name]
+
+    if nil == parameter {
+        parameter = getParameterFromSystem(name)
+    }
+
+    if nil == parameter && nil != containerObject.logger {
+        containerObject.logger.Warningf("Parameter \"%s\" not exists", name)
+    }
+
+    return fmt.Sprintf("%v", parameter)
+}
+
+func getParameterFromSystem(name string) interface{} {
+    var parameter interface{}
+    parameter = getParameterFromSecrets(name)
+
+    if "" == parameter {
+        parameter = getParameterFromEnv(name)
+    }
+
+    return parameter
+}
+
+func getParameterFromSecrets(name string) string {
+    name = strings.ToLower(name)
+    path := fmt.Sprintf("/run/secrets/%s", name)
+    secret, _ := ioutil.ReadFile(path)
+
+    return string(secret)
+}
+
+func getParameterFromEnv(name string) string {
+    name = strings.ToUpper(name)
+
+    return os.Getenv(name)
 }
