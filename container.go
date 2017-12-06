@@ -11,14 +11,13 @@ import (
     "strconv"
 )
 
-const defaultDatabaseName = "default"
+const (
+    defaultDatabaseName = "default"
+    envVarPrefix        = "GOCONDI_"
+)
 
 var containerObject = new(Container)
 
-// In the container initialization first list all files in /run/secret
-// second read all env var becoming with "GOCONDI
-// and last in the array
-// TODO Read from yml
 type containerInterface interface {
     GetDefaultDatabase() (*sql.DB, error)
     GetDatabase(name string) (*sql.DB, error)
@@ -27,8 +26,11 @@ type containerInterface interface {
     GetStringParameter(name string) string
     GetStringArrayParameter(name string) string
     GetIntParameter(name string) int
+    GetIntArrayParameter(name string) string
     GetFloatParameter(name string) float32
+    GetFloatArrayParameter(name string) string
     GetBoolParameter(name string) bool
+    GetBoolArrayParameter(name string) string
     SetDefaultDatabase(database *sql.DB) *Container
     SetDatabase(name string, database *sql.DB) *Container
     SetDatabases(databases map[string]*sql.DB) *Container
@@ -101,6 +103,10 @@ func (containerObject *Container) GetBoolParameter(name string) bool {
     value, _ := strconv.ParseBool(parameter)
 
     return value
+}
+
+func (containerObject *Container) GetParameters() map[string]interface{} {
+    return containerObject.parameters
 }
 
 func (containerObject *Container) SetDefaultDatabase(database *sql.DB) *Container {
@@ -177,17 +183,28 @@ func (containerObject *Container) readSecretsFolder() {
 
 func (containerObject *Container) readParametersFromEnv() {
     for _, pair := range os.Environ() {
-        name := pair[0]
+        split := strings.Split(pair, "=")
+        name := split[0]
+        value := split[1]
 
-        containerObject.logger.WithField("var", name).Debugf("Reading env var")
+        if strings.Contains(name, envVarPrefix) {
+            name = strings.Split(name, envVarPrefix)[1]
+            name = strings.ToLower(name)
+
+            if "" != name {
+                containerObject.SetParameter(name, value)
+            }
+        }
     }
 }
 
+// Deprecated: Use New() instance
 func GetContainer() *Container {
     return containerObject
 }
 
-func New() *Container {
+func New(logger *logrus.Logger) *Container {
+    containerObject.SetLogger(logger)
     containerObject.readSecretsFolder()
     containerObject.readParametersFromEnv()
 
