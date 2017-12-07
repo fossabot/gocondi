@@ -23,12 +23,17 @@ type containerInterface interface {
     GetDatabase(name string) (*sql.DB, error)
     GetDatabases() []*sql.DB
     GetLogger() *logrus.Logger
+    GetParameters() map[string]interface{}
     GetStringParameter(name string) string
-    GetStringArrayParameter(name string) string
+    GetStringArrayParameter(name string) []string
     GetIntParameter(name string) int
-    GetIntArrayParameter(name string) string
+    GetIntArrayParameter(name string) []int
+    GetInt64Parameter(name string) int64
+    GetInt64ArrayParameter(name string) []int64
     GetFloatParameter(name string) float32
-    GetFloatArrayParameter(name string) string
+    GetFloatArrayParameter(name string) []float32
+    GetFloat64Parameter(name string) float64
+    GetFloat64ArrayParameter(name string) []float64
     GetBoolParameter(name string) bool
     GetBoolArrayParameter(name string) string
     SetDefaultDatabase(database *sql.DB) *Container
@@ -198,17 +203,14 @@ func (containerObject *Container) readParametersFromEnv() {
     }
 }
 
-// Deprecated: Use New() instance
 func GetContainer() *Container {
     return containerObject
 }
 
-func New(logger *logrus.Logger) *Container {
+func Initialize(logger *logrus.Logger) {
     containerObject.SetLogger(logger)
     containerObject.readSecretsFolder()
     containerObject.readParametersFromEnv()
-
-    return containerObject
 }
 
 func getParameter(name string) string {
