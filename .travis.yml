@@ -14,4 +14,4 @@ install:
   - export PATH="$HOME/bin:$PATH"
   - glide install
 
-script: go test ./... -cover -v
+script: cd $GOPATH/src/github.com/avegao/gocondi && go test ./ -cover -v
