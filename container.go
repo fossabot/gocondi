@@ -35,7 +35,7 @@ type containerInterface interface {
     GetFloat64Parameter(name string) float64
     GetFloat64ArrayParameter(name string) []float64
     GetBoolParameter(name string) bool
-    GetBoolArrayParameter(name string) string
+    GetBoolArrayParameter(name string) []bool
     SetDefaultDatabase(database *sql.DB) *Container
     SetDatabase(name string, database *sql.DB) *Container
     SetDatabases(databases map[string]*sql.DB) *Container
@@ -89,25 +89,148 @@ func (containerObject *Container) GetStringParameter(name string) string {
     return getParameter(name)
 }
 
+func (containerObject *Container) GetStringArrayParameter(name string) []string {
+    return getArrayParameter(name)
+}
+
 func (containerObject *Container) GetIntParameter(name string) int {
     parameter := getParameter(name)
-    value, _ := strconv.ParseInt(parameter, 10, 0)
+    value, err := strconv.ParseInt(parameter, 10, 0)
+
+    if nil != err {
+        containerObject.logger.WithError(err).Panicf("Error parsing int parameter \"%s\"", name)
+    }
 
     return int(value)
 }
 
+func (containerObject *Container) GetIntArrayParameter(name string) []int {
+    parametersInString := getArrayParameter(name)
+    parameters := make([]int, len(parametersInString))
+
+    for index, stringValue := range parametersInString {
+        value, err := strconv.ParseInt(stringValue, 10, 0)
+
+        if nil != err {
+            containerObject.logger.WithError(err).Panicf("Error parsing int array parameter \"%s\"", name)
+        }
+
+        parameters[index] = int(value)
+    }
+
+    return parameters
+}
+
+func (containerObject *Container) GetInt64Parameter(name string) int64 {
+    parameter := getParameter(name)
+    value, err := strconv.ParseInt(parameter, 10, 0)
+
+    if nil != err {
+        containerObject.logger.WithError(err).Panicf("Error parsing int64 parameter \"%s\"", name)
+    }
+
+    return value
+}
+
+func (containerObject *Container) GetInt64ArrayParameter(name string) []int64 {
+    parametersInString := getArrayParameter(name)
+    parameters := make([]int64, len(parametersInString))
+
+    for index, stringValue := range parametersInString {
+        value, err := strconv.ParseInt(stringValue, 10, 0)
+
+        if nil != err {
+            containerObject.logger.WithError(err).Panicf("Error parsing int64 array parameter \"%s\"", name)
+        }
+
+        parameters[index] = value
+    }
+
+    return parameters
+}
+
 func (containerObject *Container) GetFloatParameter(name string) float32 {
     parameter := getParameter(name)
-    value, _ := strconv.ParseFloat(parameter, 0)
+    value, err := strconv.ParseFloat(parameter, 0)
+
+    if nil != err {
+        containerObject.logger.WithError(err).Panicf("Error parsing float parameter \"%s\"", name)
+    }
 
     return float32(value)
 }
 
-func (containerObject *Container) GetBoolParameter(name string) bool {
+func (containerObject *Container) GetFloatArrayParameter(name string) []float32 {
+    parametersInString := getArrayParameter(name)
+    parameters := make([]float32, len(parametersInString))
+
+    for index, stringValue := range parametersInString {
+        value, err := strconv.ParseFloat(stringValue, 0)
+
+        if nil != err {
+            containerObject.logger.WithError(err).Panicf("Error parsing float array parameter \"%s\"", name)
+        }
+
+        parameters[index] = float32(value)
+    }
+
+    return parameters
+}
+
+func (containerObject *Container) GetFloat64Parameter(name string) float64 {
     parameter := getParameter(name)
-    value, _ := strconv.ParseBool(parameter)
+    value, err := strconv.ParseFloat(parameter, 0)
+
+    if nil != err {
+        containerObject.logger.WithError(err).Panicf("Error parsing float64 parameter \"%s\"", name)
+    }
 
     return value
+}
+
+func (containerObject *Container) GetFloat64ArrayParameter(name string) []float64 {
+    parametersInString := getArrayParameter(name)
+    parameters := make([]float64, len(parametersInString))
+
+    for index, stringValue := range parametersInString {
+        value, err := strconv.ParseFloat(stringValue, 0)
+
+        if nil != err {
+            containerObject.logger.WithError(err).Panicf("Error parsing float array parameter \"%s\"", name)
+        }
+
+        parameters[index] = value
+    }
+
+    return parameters
+}
+
+func (containerObject *Container) GetBoolParameter(name string) bool {
+    parameter := getParameter(name)
+    value, err := strconv.ParseBool(parameter)
+
+    if nil != err {
+        containerObject.logger.WithError(err).Panicf("Error parsing bool parameter \"%s\"", name)
+    }
+
+    return value
+}
+
+func (containerObject *Container) GetBoolArrayParameter(name string) []bool {
+    parametersInString := getArrayParameter(name)
+    parameters := make([]bool, len(parametersInString))
+
+    for index, stringValue := range parametersInString {
+        value, err := strconv.ParseBool(stringValue)
+
+        if nil != err {
+            containerObject.logger.WithError(err).Panicf("Error parsing bool array parameter \"%s\"", name)
+        }
+
+        parameters[index] = value
+    }
+
+    return parameters
 }
 
 func (containerObject *Container) GetParameters() map[string]interface{} {
@@ -225,6 +348,12 @@ func getParameter(name string) string {
     }
 
     return fmt.Sprintf("%v", parameter)
+}
+
+func getArrayParameter(name string) []string {
+    parameter := getParameter(name)
+
+    return strings.Split(parameter, ",")
 }
 
 func getParameterFromSystem(name string) interface{} {
