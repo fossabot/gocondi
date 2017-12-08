@@ -56,9 +56,9 @@ func (containerObject *Container) GetDefaultDatabase() (*sql.DB, error) {
 }
 
 func (containerObject *Container) GetDatabase(name string) (*sql.DB, error) {
-    database := containerObject.databases[name]
-
-    if nil == database {
+    if database, ok := containerObject.databases[name]; ok {
+        return database, nil
+    } else {
         errorMessage := fmt.Sprintf("Database connection with name %s not exists", name)
 
         if nil != containerObject.logger {
@@ -67,8 +67,6 @@ func (containerObject *Container) GetDatabase(name string) (*sql.DB, error) {
 
         return nil, errors.New(errorMessage)
     }
-
-    return database, nil
 }
 
 func (containerObject *Container) GetDatabases() []*sql.DB {
