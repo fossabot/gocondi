@@ -1,10 +1,10 @@
 package gocondi
 
 import (
-    "testing"
-    "github.com/stretchr/testify/assert"
     "database/sql"
     "github.com/sirupsen/logrus"
+    "github.com/stretchr/testify/assert"
+    "testing"
 )
 
 const (

@@ -2,13 +2,13 @@ package gocondi
 
 import (
     "database/sql"
-    "github.com/sirupsen/logrus"
     "errors"
     "fmt"
-    "strings"
+    "github.com/sirupsen/logrus"
     "io/ioutil"
     "os"
     "strconv"
+    "strings"
 )
 
 const (
