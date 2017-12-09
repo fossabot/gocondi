@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"testing"
 )
 
@@ -46,7 +47,11 @@ func TestGetContainer(t *testing.T) {
 		GetContainer()
 	})
 
-	Initialize(logrus.New())
+	logger := logrus.New()
+	logger.Out = ioutil.Discard
+	logger.Level = logrus.PanicLevel
+
+	Initialize(logger)
 
 	assert.Equal(t, containerObject, GetContainer())
 }
@@ -101,7 +106,7 @@ func TestContainer_GetDatabase(t *testing.T) {
 	assert.NoError(t, err)
 
 	databaseInContainer, err = containerObject.GetDatabase(nonExistingDatabaseName)
-	//assert.NotEqual(t, db, databaseInContainer)
+
 	assert.Nil(t, databaseInContainer)
 	assert.Error(t, err)
 }
@@ -133,7 +138,6 @@ func TestContainer_GetDefaultDatabase(t *testing.T) {
 
 	defaultDatabase, err = containerObject.GetDefaultDatabase()
 
-	// assert.NotEqual(t, db, defaultDatabase)
 	assert.Nil(t, defaultDatabase)
 	assert.Error(t, err)
 }
@@ -159,6 +163,9 @@ func TestContainer_GetBoolArrayParameter(t *testing.T) {
 	parameter := containerObject.GetBoolArrayParameter(boolArrayParameter)
 
 	assert.Equal(t, testParameters[boolArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetBoolArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetBoolParameter(t *testing.T) {
@@ -167,6 +174,9 @@ func TestContainer_GetBoolParameter(t *testing.T) {
 	parameter := containerObject.GetBoolParameter(boolParameter)
 
 	assert.Equal(t, testParameters[boolParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetBoolParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetFloatArrayParameter(t *testing.T) {
@@ -175,6 +185,9 @@ func TestContainer_GetFloatArrayParameter(t *testing.T) {
 	parameter := containerObject.GetFloatArrayParameter(floatArrayParameter)
 
 	assert.Equal(t, testParameters[floatArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetFloatArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetFloatParameter(t *testing.T) {
@@ -183,6 +196,9 @@ func TestContainer_GetFloatParameter(t *testing.T) {
 	parameter := containerObject.GetFloatParameter(floatParameter)
 
 	assert.Equal(t, testParameters[floatParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetFloatParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetFloat64ArrayParameter(t *testing.T) {
@@ -191,6 +207,9 @@ func TestContainer_GetFloat64ArrayParameter(t *testing.T) {
 	parameter := containerObject.GetFloat64ArrayParameter(float64ArrayParameter)
 
 	assert.Equal(t, testParameters[float64ArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetFloat64ArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetFloat64Parameter(t *testing.T) {
@@ -199,6 +218,9 @@ func TestContainer_GetFloat64Parameter(t *testing.T) {
 	parameter := containerObject.GetFloat64Parameter(float64Parameter)
 
 	assert.Equal(t, testParameters[float64Parameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetFloat64Parameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetIntArrayParameter(t *testing.T) {
@@ -207,6 +229,9 @@ func TestContainer_GetIntArrayParameter(t *testing.T) {
 	parameter := containerObject.GetIntArrayParameter(intArrayParameter)
 
 	assert.Equal(t, testParameters[intArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetIntArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetIntParameter(t *testing.T) {
@@ -215,6 +240,9 @@ func TestContainer_GetIntParameter(t *testing.T) {
 	parameter := containerObject.GetIntParameter(intParameter)
 
 	assert.Equal(t, testParameters[intParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetIntParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetInt64ArrayParameter(t *testing.T) {
@@ -223,6 +251,9 @@ func TestContainer_GetInt64ArrayParameter(t *testing.T) {
 	parameter := containerObject.GetInt64ArrayParameter(int64ArrayParameter)
 
 	assert.Equal(t, testParameters[int64ArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetInt64ArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetInt64Parameter(t *testing.T) {
@@ -231,6 +262,9 @@ func TestContainer_GetInt64Parameter(t *testing.T) {
 	parameter := containerObject.GetInt64Parameter(int64Parameter)
 
 	assert.Equal(t, testParameters[int64Parameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetInt64Parameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetStringArrayParameter(t *testing.T) {
@@ -239,6 +273,9 @@ func TestContainer_GetStringArrayParameter(t *testing.T) {
 	parameter := containerObject.GetStringArrayParameter(stringArrayParameter)
 
 	assert.Equal(t, testParameters[stringArrayParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetStringArrayParameter(notExistParameter)
+	})
 }
 
 func TestContainer_GetStringParameter(t *testing.T) {
@@ -247,4 +284,7 @@ func TestContainer_GetStringParameter(t *testing.T) {
 	parameter := containerObject.GetStringParameter(stringParameter)
 
 	assert.Equal(t, testParameters[stringParameter], parameter)
+	assert.Panics(t, func() {
+		containerObject.GetStringParameter(notExistParameter)
+	})
 }
