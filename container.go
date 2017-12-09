@@ -16,7 +16,7 @@ const (
     envVarPrefix        = "GOCONDI_"
 )
 
-var containerObject = new(Container)
+var containerObject *Container
 
 type containerInterface interface {
     GetDefaultDatabase() (*sql.DB, error)
@@ -56,14 +56,10 @@ func (containerObject *Container) GetDefaultDatabase() (*sql.DB, error) {
 }
 
 func (containerObject *Container) GetDatabase(name string) (*sql.DB, error) {
-    if database, ok := containerObject.databases[name]; ok {
+    if database, exists := containerObject.databases[name]; exists {
         return database, nil
     } else {
         errorMessage := fmt.Sprintf("Database connection with name %s not exists", name)
-
-        if nil != containerObject.logger {
-            containerObject.logger.Panic(errorMessage)
-        }
 
         return nil, errors.New(errorMessage)
     }
@@ -88,7 +84,15 @@ func (containerObject *Container) GetStringParameter(name string) string {
 }
 
 func (containerObject *Container) GetStringArrayParameter(name string) []string {
-    return getArrayParameter(name)
+    var values []string
+
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]string)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+    }
+
+    return values
 }
 
 func (containerObject *Container) GetIntParameter(name string) int {
@@ -103,20 +107,15 @@ func (containerObject *Container) GetIntParameter(name string) int {
 }
 
 func (containerObject *Container) GetIntArrayParameter(name string) []int {
-    parametersInString := getArrayParameter(name)
-    parameters := make([]int, len(parametersInString))
+    var values []int
 
-    for index, stringValue := range parametersInString {
-        value, err := strconv.ParseInt(stringValue, 10, 0)
-
-        if nil != err {
-            containerObject.logger.WithError(err).Panicf("Error parsing int array parameter \"%s\"", name)
-        }
-
-        parameters[index] = int(value)
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]int)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    return parameters
+    return values
 }
 
 func (containerObject *Container) GetInt64Parameter(name string) int64 {
@@ -131,20 +130,15 @@ func (containerObject *Container) GetInt64Parameter(name string) int64 {
 }
 
 func (containerObject *Container) GetInt64ArrayParameter(name string) []int64 {
-    parametersInString := getArrayParameter(name)
-    parameters := make([]int64, len(parametersInString))
+    var values []int64
 
-    for index, stringValue := range parametersInString {
-        value, err := strconv.ParseInt(stringValue, 10, 0)
-
-        if nil != err {
-            containerObject.logger.WithError(err).Panicf("Error parsing int64 array parameter \"%s\"", name)
-        }
-
-        parameters[index] = value
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]int64)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    return parameters
+    return values
 }
 
 func (containerObject *Container) GetFloatParameter(name string) float32 {
@@ -159,20 +153,15 @@ func (containerObject *Container) GetFloatParameter(name string) float32 {
 }
 
 func (containerObject *Container) GetFloatArrayParameter(name string) []float32 {
-    parametersInString := getArrayParameter(name)
-    parameters := make([]float32, len(parametersInString))
+    var values []float32
 
-    for index, stringValue := range parametersInString {
-        value, err := strconv.ParseFloat(stringValue, 0)
-
-        if nil != err {
-            containerObject.logger.WithError(err).Panicf("Error parsing float array parameter \"%s\"", name)
-        }
-
-        parameters[index] = float32(value)
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]float32)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    return parameters
+    return values
 }
 
 func (containerObject *Container) GetFloat64Parameter(name string) float64 {
@@ -187,20 +176,15 @@ func (containerObject *Container) GetFloat64Parameter(name string) float64 {
 }
 
 func (containerObject *Container) GetFloat64ArrayParameter(name string) []float64 {
-    parametersInString := getArrayParameter(name)
-    parameters := make([]float64, len(parametersInString))
+    var values []float64
 
-    for index, stringValue := range parametersInString {
-        value, err := strconv.ParseFloat(stringValue, 0)
-
-        if nil != err {
-            containerObject.logger.WithError(err).Panicf("Error parsing float array parameter \"%s\"", name)
-        }
-
-        parameters[index] = value
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]float64)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    return parameters
+    return values
 }
 
 func (containerObject *Container) GetBoolParameter(name string) bool {
@@ -215,20 +199,15 @@ func (containerObject *Container) GetBoolParameter(name string) bool {
 }
 
 func (containerObject *Container) GetBoolArrayParameter(name string) []bool {
-    parametersInString := getArrayParameter(name)
-    parameters := make([]bool, len(parametersInString))
+    var values []bool
 
-    for index, stringValue := range parametersInString {
-        value, err := strconv.ParseBool(stringValue)
-
-        if nil != err {
-            containerObject.logger.WithError(err).Panicf("Error parsing bool array parameter \"%s\"", name)
-        }
-
-        parameters[index] = value
+    if parameter, exists := containerObject.parameters[name]; exists {
+        values = (parameter).([]bool)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    return parameters
+    return values
 }
 
 func (containerObject *Container) GetParameters() map[string]interface{} {
@@ -281,14 +260,13 @@ func (containerObject *Container) readSecretsFolder() {
     secretFiles, err := ioutil.ReadDir("/run/secrets")
 
     if nil != err {
-        containerObject.logger.WithError(err).Warningf("Error reading secrets folder")
         return
     }
 
     for _, secretFile := range secretFiles {
         // This is for prevent
         if secretFile.IsDir() {
-            containerObject.logger.Warningf("Secrets folder has a folder!")
+            containerObject.logger.Warningf("Secrets folder has a subfolder!")
             continue
         }
 
@@ -297,7 +275,6 @@ func (containerObject *Container) readSecretsFolder() {
         secretInBytes, err := ioutil.ReadFile(fmt.Sprintf("/run/secrets/%s", secretName))
 
         if nil != err {
-            containerObject.logger.WithError(err).WithField("secret", secretName).Warningf("Error reading secret")
             continue
         }
 
@@ -325,56 +302,28 @@ func (containerObject *Container) readParametersFromEnv() {
 }
 
 func GetContainer() *Container {
+    if nil == containerObject {
+        panic("Container isn't initialized. You must use gocondi.Initialize(logger) first.")
+    }
+
     return containerObject
 }
 
 func Initialize(logger *logrus.Logger) {
+    containerObject = new(Container)
     containerObject.SetLogger(logger)
     containerObject.readSecretsFolder()
     containerObject.readParametersFromEnv()
 }
 
 func getParameter(name string) string {
-    parameter := containerObject.parameters[name]
+    var value string
 
-    if nil == parameter {
-        parameter = getParameterFromSystem(name)
+    if parameter, exists := containerObject.parameters[name]; exists {
+        value = fmt.Sprintf("%v", parameter)
+    } else {
+        containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
     }
 
-    if nil == parameter && nil != containerObject.logger {
-        containerObject.logger.Warningf("Parameter \"%s\" not exists", name)
-    }
-
-    return fmt.Sprintf("%v", parameter)
-}
-
-func getArrayParameter(name string) []string {
-    parameter := getParameter(name)
-
-    return strings.Split(parameter, ",")
-}
-
-func getParameterFromSystem(name string) interface{} {
-    var parameter interface{}
-    parameter = getParameterFromSecrets(name)
-
-    if "" == parameter {
-        parameter = getParameterFromEnv(name)
-    }
-
-    return parameter
-}
-
-func getParameterFromSecrets(name string) string {
-    name = strings.ToLower(name)
-    path := fmt.Sprintf("/run/secrets/%s", name)
-    secret, _ := ioutil.ReadFile(path)
-
-    return string(secret)
-}
-
-func getParameterFromEnv(name string) string {
-    name = strings.ToUpper(name)
-
-    return os.Getenv(name)
+    return value
 }
