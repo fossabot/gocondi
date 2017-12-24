@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	defaultDatabaseName = "default"
-	envVarPrefix        = "GOCONDI_"
+	defaultDatabaseName      = "default"
+	envVarPrefix             = "GOCONDI_"
+	driverPostgres           = "postgres"
+	connectionStringPostgres = "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
 )
 
-var containerObject *Container
+var c *Container
 
 type containerInterface interface {
 	GetDefaultDatabase() (*sql.DB, error)
@@ -51,12 +53,12 @@ type Container struct {
 	parameters map[string]interface{}
 }
 
-func (containerObject *Container) GetDefaultDatabase() (*sql.DB, error) {
-	return containerObject.GetDatabase("default")
+func (c *Container) GetDefaultDatabase() (*sql.DB, error) {
+	return c.GetDatabase("default")
 }
 
-func (containerObject *Container) GetDatabase(name string) (*sql.DB, error) {
-	if database, exists := containerObject.databases[name]; exists {
+func (c *Container) GetDatabase(name string) (*sql.DB, error) {
+	if database, exists := c.databases[name]; exists {
 		return database, nil
 	} else {
 		errorMessage := fmt.Sprintf("Database connection with name %s not exists", name)
@@ -65,198 +67,198 @@ func (containerObject *Container) GetDatabase(name string) (*sql.DB, error) {
 	}
 }
 
-func (containerObject *Container) GetDatabases() []*sql.DB {
+func (c *Container) GetDatabases() []*sql.DB {
 	databases := make([]*sql.DB, 0)
 
-	for _, value := range containerObject.databases {
+	for _, value := range c.databases {
 		databases = append(databases, value)
 	}
 
 	return databases
 }
 
-func (containerObject *Container) GetLogger() *logrus.Logger {
-	return containerObject.logger
+func (c *Container) GetLogger() *logrus.Logger {
+	return c.logger
 }
 
-func (containerObject *Container) GetStringParameter(name string) string {
+func (c *Container) GetStringParameter(name string) string {
 	return getParameter(name)
 }
 
-func (containerObject *Container) GetStringArrayParameter(name string) []string {
+func (c *Container) GetStringArrayParameter(name string) []string {
 	var values []string
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]string)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetIntParameter(name string) int {
+func (c *Container) GetIntParameter(name string) int {
 	parameter := getParameter(name)
 	value, err := strconv.ParseInt(parameter, 10, 0)
 
 	if nil != err {
-		containerObject.logger.WithError(err).Panicf("Error parsing int parameter \"%s\"", name)
+		c.logger.WithError(err).Panicf("Error parsing int parameter \"%s\"", name)
 	}
 
 	return int(value)
 }
 
-func (containerObject *Container) GetIntArrayParameter(name string) []int {
+func (c *Container) GetIntArrayParameter(name string) []int {
 	var values []int
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]int)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetInt64Parameter(name string) int64 {
+func (c *Container) GetInt64Parameter(name string) int64 {
 	parameter := getParameter(name)
 	value, err := strconv.ParseInt(parameter, 10, 0)
 
 	if nil != err {
-		containerObject.logger.WithError(err).Panicf("Error parsing int64 parameter \"%s\"", name)
+		c.logger.WithError(err).Panicf("Error parsing int64 parameter \"%s\"", name)
 	}
 
 	return value
 }
 
-func (containerObject *Container) GetInt64ArrayParameter(name string) []int64 {
+func (c *Container) GetInt64ArrayParameter(name string) []int64 {
 	var values []int64
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]int64)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetFloatParameter(name string) float32 {
+func (c *Container) GetFloatParameter(name string) float32 {
 	parameter := getParameter(name)
 	value, err := strconv.ParseFloat(parameter, 0)
 
 	if nil != err {
-		containerObject.logger.WithError(err).Panicf("Error parsing float parameter \"%s\"", name)
+		c.logger.WithError(err).Panicf("Error parsing float parameter \"%s\"", name)
 	}
 
 	return float32(value)
 }
 
-func (containerObject *Container) GetFloatArrayParameter(name string) []float32 {
+func (c *Container) GetFloatArrayParameter(name string) []float32 {
 	var values []float32
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]float32)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetFloat64Parameter(name string) float64 {
+func (c *Container) GetFloat64Parameter(name string) float64 {
 	parameter := getParameter(name)
 	value, err := strconv.ParseFloat(parameter, 0)
 
 	if nil != err {
-		containerObject.logger.WithError(err).Panicf("Error parsing float64 parameter \"%s\"", name)
+		c.logger.WithError(err).Panicf("Error parsing float64 parameter \"%s\"", name)
 	}
 
 	return value
 }
 
-func (containerObject *Container) GetFloat64ArrayParameter(name string) []float64 {
+func (c *Container) GetFloat64ArrayParameter(name string) []float64 {
 	var values []float64
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]float64)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetBoolParameter(name string) bool {
+func (c *Container) GetBoolParameter(name string) bool {
 	parameter := getParameter(name)
 	value, err := strconv.ParseBool(parameter)
 
 	if nil != err {
-		containerObject.logger.WithError(err).Panicf("Error parsing bool parameter \"%s\"", name)
+		c.logger.WithError(err).Panicf("Error parsing bool parameter \"%s\"", name)
 	}
 
 	return value
 }
 
-func (containerObject *Container) GetBoolArrayParameter(name string) []bool {
+func (c *Container) GetBoolArrayParameter(name string) []bool {
 	var values []bool
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		values = (parameter).([]bool)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return values
 }
 
-func (containerObject *Container) GetParameters() map[string]interface{} {
-	return containerObject.parameters
+func (c *Container) GetParameters() map[string]interface{} {
+	return c.parameters
 }
 
-func (containerObject *Container) SetDefaultDatabase(database *sql.DB) *Container {
-	return containerObject.SetDatabase("default", database)
+func (c *Container) SetDefaultDatabase(database *sql.DB) *Container {
+	return c.SetDatabase("default", database)
 }
 
-func (containerObject *Container) SetDatabase(name string, database *sql.DB) *Container {
-	if nil == containerObject.databases {
-		containerObject.databases = make(map[string]*sql.DB)
+func (c *Container) SetDatabase(name string, database *sql.DB) *Container {
+	if nil == c.databases {
+		c.databases = make(map[string]*sql.DB)
 	}
 
-	containerObject.databases[name] = database
+	c.databases[name] = database
 
-	return containerObject
+	return c
 }
 
-func (containerObject *Container) SetDatabases(databases map[string]*sql.DB) *Container {
-	containerObject.databases = databases
+func (c *Container) SetDatabases(databases map[string]*sql.DB) *Container {
+	c.databases = databases
 
-	return containerObject
+	return c
 }
 
-func (containerObject *Container) SetLogger(logger *logrus.Logger) *Container {
-	containerObject.logger = logger
+func (c *Container) SetLogger(logger *logrus.Logger) *Container {
+	c.logger = logger
 
-	return containerObject
+	return c
 }
 
-func (containerObject *Container) SetParameter(name string, parameter interface{}) *Container {
-	if nil == containerObject.parameters {
-		containerObject.parameters = make(map[string]interface{})
+func (c *Container) SetParameter(name string, parameter interface{}) *Container {
+	if nil == c.parameters {
+		c.parameters = make(map[string]interface{})
 	}
 
-	containerObject.parameters[name] = parameter
+	c.parameters[name] = parameter
 
-	return containerObject
+	return c
 }
 
-func (containerObject *Container) SetParameters(parameters map[string]interface{}) *Container {
-	containerObject.parameters = parameters
+func (c *Container) SetParameters(parameters map[string]interface{}) *Container {
+	c.parameters = parameters
 
-	return containerObject
+	return c
 }
 
-func (containerObject *Container) readSecretsFolder() {
+func (c *Container) loadSecretsFolder() {
 	secretFiles, err := ioutil.ReadDir("/run/secrets")
 
 	if nil != err {
@@ -266,7 +268,7 @@ func (containerObject *Container) readSecretsFolder() {
 	for _, secretFile := range secretFiles {
 		// This is for prevent
 		if secretFile.IsDir() {
-			containerObject.logger.Warningf("Secrets folder has a subfolder!")
+			c.logger.Warningf("Secrets folder has a subfolder!")
 			continue
 		}
 
@@ -280,11 +282,11 @@ func (containerObject *Container) readSecretsFolder() {
 
 		secret := string(secretInBytes)
 
-		containerObject.SetParameter(secretName, secret)
+		c.SetParameter(secretName, secret)
 	}
 }
 
-func (containerObject *Container) readParametersFromEnv() {
+func (c *Container) loadParametersFromEnv() {
 	for _, pair := range os.Environ() {
 		split := strings.Split(pair, "=")
 		name := split[0]
@@ -295,34 +297,89 @@ func (containerObject *Container) readParametersFromEnv() {
 			name = strings.ToLower(name)
 
 			if "" != name {
-				containerObject.SetParameter(name, value)
+				c.SetParameter(name, value)
 			}
 		}
 	}
 }
 
+func (c *Container) loadDefaultDatabase() {
+	const logTag = "gocondi.loadDefaultDatabase()"
+	c.logger.Debugf("%s -> START", logTag)
+
+	host := c.GetStringParameter("database_host")
+	port := c.GetIntParameter("database_port")
+	user := c.GetStringParameter("database_username")
+	password := c.GetStringParameter("database_password")
+	dbName := c.GetStringParameter("database_name")
+	driver := c.GetStringParameter("database_driver")
+
+	if host == "" {
+		return
+	}
+
+	var connectionString string
+
+	switch driver {
+	case driverPostgres:
+		connectionString = fmt.Sprintf(connectionStringPostgres, host, port, user, password, dbName)
+		break
+	default:
+		err := errors.New(fmt.Sprintf("Database driver '%s' is not supported", driver))
+
+		c.logger.WithError(err).Panicf("Error loading default database")
+		return
+	}
+
+	db, err := sql.Open(driver, connectionString)
+
+	if nil != err {
+		c.logger.WithError(err).Panicf("Error loading default database")
+	}
+
+	c.SetDefaultDatabase(db)
+
+	c.logger.Debugf("%s -> Database connected", logTag)
+	c.logger.Debugf("%s -> END", logTag)
+}
+
+func (c *Container) CloseDatabases() {
+	for name, database := range c.databases {
+		if err := database.Close(); err != nil {
+			c.logger.WithField("name", name).WithError(err).Errorf("Error closing database")
+		} else {
+			c.logger.WithField("name", name).Debugf("Closed database")
+		}
+	}
+}
+
+func (c *Container) Close() {
+	c.CloseDatabases()
+}
+
 func GetContainer() *Container {
-	if nil == containerObject {
+	if nil == c {
 		panic("Container isn't initialized. You must use gocondi.Initialize(logger) first.")
 	}
 
-	return containerObject
+	return c
 }
 
 func Initialize(logger *logrus.Logger) {
-	containerObject = new(Container)
-	containerObject.SetLogger(logger)
-	containerObject.readSecretsFolder()
-	containerObject.readParametersFromEnv()
+	c = new(Container)
+	c.SetLogger(logger)
+	c.loadSecretsFolder()
+	c.loadParametersFromEnv()
+	c.loadDefaultDatabase()
 }
 
 func getParameter(name string) string {
 	var value string
 
-	if parameter, exists := containerObject.parameters[name]; exists {
+	if parameter, exists := c.parameters[name]; exists {
 		value = fmt.Sprintf("%v", parameter)
 	} else {
-		containerObject.logger.Panicf("Parameter \"%s\" not exists", name)
+		c.logger.Panicf("Parameter \"%s\" not exists", name)
 	}
 
 	return value
