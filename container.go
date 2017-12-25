@@ -7,8 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 const (
@@ -273,7 +275,6 @@ func (c *Container) loadSecretsFolder() {
 		}
 
 		secretName := secretFile.Name()
-
 		secretInBytes, err := ioutil.ReadFile(fmt.Sprintf("/run/secrets/%s", secretName))
 
 		if nil != err {
@@ -357,6 +358,13 @@ func (c *Container) Close() {
 	c.CloseDatabases()
 }
 
+func (c *Container) Reload() {
+	c.logger.Infof("Reloading config...")
+	c.loadSecretsFolder()
+	c.loadParametersFromEnv()
+	c.loadDefaultDatabase()
+}
+
 func GetContainer() *Container {
 	if nil == c {
 		panic("Container isn't initialized. You must use gocondi.Initialize(logger) first.")
@@ -371,6 +379,16 @@ func Initialize(logger *logrus.Logger) {
 	c.loadSecretsFolder()
 	c.loadParametersFromEnv()
 	c.loadDefaultDatabase()
+	listenReloadSignal()
+}
+
+func listenReloadSignal() {
+	signalChannel := make(chan os.Signal)
+	signal.Notify(signalChannel, syscall.SIGHUP)
+	go func() {
+		<-signalChannel
+		GetContainer().Reload()
+	}()
 }
 
 func getParameter(name string) string {
