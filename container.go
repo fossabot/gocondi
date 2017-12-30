@@ -101,13 +101,18 @@ func (c *Container) GetStringArrayParameter(name string) []string {
 
 func (c *Container) GetIntParameter(name string) int {
 	parameter := getParameter(name)
-	value, err := strconv.ParseInt(parameter, 10, 0)
 
-	if nil != err {
-		c.logger.WithError(err).Panicf("Error parsing int parameter \"%s\"", name)
+	if parameter != "" {
+		value, err := strconv.ParseInt(parameter, 10, 0)
+
+		if nil != err {
+			c.logger.WithError(err).Panicf("Error parsing int parameter \"%s\"", name)
+		}
+
+		return int(value)
 	}
 
-	return int(value)
+	return 0
 }
 
 func (c *Container) GetIntArrayParameter(name string) []int {
@@ -308,6 +313,12 @@ func (c *Container) loadDefaultDatabase() {
 	const logTag = "gocondi.loadDefaultDatabase()"
 	c.logger.Debugf("%s -> START", logTag)
 
+	defer func() {
+		if err := recover(); err != nil {
+			c.logger.WithField("error", err).Error()
+		}
+	}()
+
 	host := c.GetStringParameter("database_host")
 	port := c.GetIntParameter("database_port")
 	user := c.GetStringParameter("database_username")
@@ -383,6 +394,7 @@ func Initialize(logger *logrus.Logger) {
 }
 
 func listenReloadSignal() {
+	c.logger.Debugf("Listening reload signal...")
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGHUP)
 	go func() {
