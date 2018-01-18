@@ -266,7 +266,9 @@ func (c *Container) SetParameters(parameters map[string]interface{}) *Container 
 }
 
 func (c *Container) loadSecretsFolder() {
-	secretFiles, err := ioutil.ReadDir("/run/secrets")
+	const secretDir = "/run/secrets"
+
+	secretFiles, err := ioutil.ReadDir(secretDir)
 
 	if nil != err {
 		return
@@ -280,10 +282,16 @@ func (c *Container) loadSecretsFolder() {
 		}
 
 		secretName := secretFile.Name()
-		secretInBytes, err := ioutil.ReadFile(fmt.Sprintf("/run/secrets/%s", secretName))
+		secretInBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", secretDir, secretName))
 
 		if nil != err {
 			continue
+		}
+
+		secretLen := len(secretInBytes)
+
+		if lastChar := secretInBytes[secretLen-1]; string(lastChar) == "\n" {
+			secretInBytes = secretInBytes[:secretLen-1]
 		}
 
 		secret := string(secretInBytes)
