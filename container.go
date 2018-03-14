@@ -17,7 +17,9 @@ const (
 	defaultDatabaseName      = "default"
 	envVarPrefix             = "GOCONDI_"
 	driverPostgres           = "postgres"
+	driverMysql              = "mysql"
 	connectionStringPostgres = "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
+	connectionStringMysql    = "%s:%s@tcp(%s:%s)/%s"
 )
 
 var c *Container
@@ -344,6 +346,8 @@ func (c *Container) loadDefaultDatabase() {
 	case driverPostgres:
 		connectionString = fmt.Sprintf(connectionStringPostgres, host, port, user, password, dbName)
 		break
+	case driverMysql:
+		connectionString = fmt.Sprintf(connectionStringMysql, user, password, host, port, dbName)
 	default:
 		err := errors.New(fmt.Sprintf("Database driver '%s' is not supported", driver))
 
