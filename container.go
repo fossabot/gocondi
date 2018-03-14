@@ -19,7 +19,7 @@ const (
 	driverPostgres           = "postgres"
 	driverMysql              = "mysql"
 	connectionStringPostgres = "host=%s port=%d user=%s password=%s dbname=%s sslmode=disable"
-	connectionStringMysql    = "%s:%s@tcp(%s:%s)/%s"
+	connectionStringMysql    = "%s:%s@tcp(%s:%d)/%s"
 )
 
 var c *Container
